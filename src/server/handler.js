@@ -1,13 +1,13 @@
 const predictClassification = require('../services/inferenceService');
 const crypto = require('crypto');
 const storeData = require('../services/storeData');
-const { ADDRGETNETWORKPARAMS } = require('dns');
+const getAllData = require('../services/getAllData');
 
 async function postPredictHandler(request, h) {
     const { image } = request.payload;
     const { model } = request.server.app;
 
-    const { confidenceScore, label, suggestion } = await predictClassification(model, image);
+    const { label, suggestion } = await predictClassification(model, image);
     const id = crypto.randomUUID();
     const createdAt = new Date().toISOString();
 
@@ -28,8 +28,29 @@ async function postPredictHandler(request, h) {
     return response;
 }
 
-async function postPredictHistoriesHandler(request, h) {
+async function getPredictHistoriesHandler(request, h) {
     const allData = await getAllData();
+
+    const pullAllData = [];
+    allData.forEach(doc => {
+        const data = doc.data();
+        pullAllData.push({
+            id: doc.id,
+            history: {
+                result: data.result,
+                createdAt: data.createdAt,
+                suggestion: data.suggestion,
+                id: doc.id
+            }
+        });
+    });
+
+    const response = h.response({
+        status: 'sucsess',
+        data: pullAllData
+    })
+    response.code(201);
+    return response;
 }
 
-module.exports = postPredictHandler;
+module.exports = { postPredictHandler, getPredictHistoriesHandler };

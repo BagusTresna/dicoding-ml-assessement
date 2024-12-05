@@ -1,35 +1,33 @@
 const tf = require('@tensorflow/tfjs-node');
-const path = require('path');
+const InputError = require('../exceptions/InputError');
 
-let model;
-
-// Fungsi untuk memuat model
-const loadModel = async() => {
-    if (!model) {
-        model = await tf.loadGraphModel(`file://${path.join(__dirname, '../models/model.json')}`);
-    }
-    return model;
-};
-
-// Fungsi untuk memprediksi gambar
-const predictImage = async(image) => {
+async function predictClassification(model, image) {
     try {
-        const model = await loadModel();
+        const tensor = tf.node
+            .decodeJpeg(image)
+            .resizeNearestNeighbor([224, 224])
+            .expandDims()
+            .toFloat()
 
-        // Load dan persiapkan gambar untuk prediksi
-        const tensorImage = tf.node.decodeImage(image, 3);
-        const resizedImage = tf.image.resizeBilinear(tensorImage, [224, 224]);
-        const input = resizedImage.expandDims(0).div(tf.scalar(255));
+        const prediction = model.predict(tensor);
+        const score = await prediction.data();
+        const confidenceScore = Math.max(...score) * 100;
 
-        // Prediksi
-        const prediction = await model.predict(input).data();
-        const result = prediction[0] > 0.5 ? 'Cancer' : 'Non-cancer';
-        const suggestion = result === 'Cancer' ? 'Segera periksa ke dokter!' : 'Penyakit kanker tidak terdeteksi.';
+        const label = confidenceScore <= 50 ? 'Non-cancer' : 'Cancer';
+        let suggestion;
 
-        return { prediction: result, suggestion: suggestion };
+        if (label === 'Cancer') {
+            suggestion = "Segera periksa ke dokter!"
+        }
+
+        if (label === 'Non-cancer') {
+            suggestion = "Anda sehat!"
+        }
+
+        return { label, suggestion };
     } catch (error) {
-        throw new Error('Error while predicting the image');
+        throw new InputError('Terjadi kesalahan dalam melakukan prediksi')
     }
-};
+}
 
-module.exports = { predictImage };
+module.exports = predictClassification;
