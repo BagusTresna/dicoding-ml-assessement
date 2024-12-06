@@ -5,7 +5,7 @@ async function storeData(id, data) {
         projectId: 'submissionmlgc-bagus',
     });
 
-    const predictCollection = db.collection('prediction');
+    const predictCollection = db.collection('predictions');
     return predictCollection.doc(id).set(data);
 }
 
