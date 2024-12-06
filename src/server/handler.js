@@ -28,13 +28,13 @@ async function postPredictHandler(request, h) {
     return response;
 }
 
-async function getPredictHistoriesHandler(request, h) {
+async function postPredictHistoriesHandler(request, h) {
     const allData = await getAllData();
 
-    const pullAllData = [];
+    const formatAllData = [];
     allData.forEach(doc => {
         const data = doc.data();
-        pullAllData.push({
+        formatAllData.push({
             id: doc.id,
             history: {
                 result: data.result,
@@ -46,11 +46,10 @@ async function getPredictHistoriesHandler(request, h) {
     });
 
     const response = h.response({
-        status: 'sucsess',
-        data: pullAllData
+        status: 'success',
+        data: formatAllData
     })
-    response.code(201);
+    response.code(200);
     return response;
 }
-
-module.exports = { postPredictHandler, getPredictHistoriesHandler };
+module.exports = { postPredictHandler, postPredictHistoriesHandler };
